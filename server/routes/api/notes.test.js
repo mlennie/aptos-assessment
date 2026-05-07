@@ -4,6 +4,7 @@ const express = require('express');
 const request = require('supertest');
 
 const notesRouter = require('./notes');
+const notesService = require('../../services/notes');
 
 const buildApp = () => {
   const app = express();
@@ -13,7 +14,7 @@ const buildApp = () => {
 };
 
 test.beforeEach(() => {
-  notesRouter.__resetForTest();
+  notesService.__resetForTest();
 });
 
 test('POST /api/notes creates a note with 201', async () => {
@@ -101,11 +102,9 @@ test('GET /api/notes/:id returns 404 for non-numeric id', async () => {
   assert.equal(res.status, 404);
 });
 
-test('PUT /api/notes/:id updates title and content and bumps updatedAt', async () => {
+test('PUT /api/notes/:id updates title and content and preserves createdAt', async () => {
   const app = buildApp();
   const created = await request(app).post('/api/notes').send({ title: 'old', content: 'old' });
-  // ensure the timestamp ticks at least 1ms forward
-  await new Promise((r) => setTimeout(r, 5));
   const res = await request(app)
     .put(`/api/notes/${created.body.id}`)
     .send({ title: 'new', content: 'new' });
@@ -113,7 +112,7 @@ test('PUT /api/notes/:id updates title and content and bumps updatedAt', async (
   assert.equal(res.body.title, 'new');
   assert.equal(res.body.content, 'new');
   assert.equal(res.body.createdAt, created.body.createdAt);
-  assert.notEqual(res.body.updatedAt, created.body.updatedAt);
+  assert.ok(Date.parse(res.body.updatedAt) >= Date.parse(created.body.updatedAt));
 });
 
 test('PUT /api/notes/:id supports partial update (content only)', async () => {

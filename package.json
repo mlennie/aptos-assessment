@@ -45,7 +45,7 @@
     "client": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test server/routes/api/notes.test.js"
+    "test": "node --test server/services/notes.test.js server/routes/api/notes.test.js"
   },
   "browserslist": {
     "production": [
